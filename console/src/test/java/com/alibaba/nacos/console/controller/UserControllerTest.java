@@ -19,9 +19,21 @@ package com.alibaba.nacos.console.controller;
 import com.alibaba.nacos.auth.common.AuthConfigs;
 import com.alibaba.nacos.auth.common.AuthSystemTypes;
 import com.alibaba.nacos.auth.exception.AccessException;
+import com.alibaba.nacos.common.utils.LoggerUtils;
+import com.alibaba.nacos.consistency.entity.Response;
 import com.alibaba.nacos.console.security.nacos.NacosAuthManager;
 import com.alibaba.nacos.console.security.nacos.users.NacosUser;
+import com.alibaba.nacos.core.distributed.raft.JRaftServer;
+import com.alibaba.nacos.core.distributed.raft.NacosClosure;
+import com.alibaba.nacos.core.distributed.raft.utils.FailoverClosure;
+import com.alibaba.nacos.core.distributed.raft.utils.FailoverClosureImpl;
+import com.alibaba.nacos.core.utils.Loggers;
+import com.alipay.sofa.jraft.Node;
+import com.alipay.sofa.jraft.entity.Task;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.protobuf.Message;
+import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,23 +51,23 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserControllerTest {
-    
+
     @Mock
     private HttpServletRequest request;
-    
+
     @Mock
     private HttpServletResponse response;
-    
+
     @Mock
     private AuthConfigs authConfigs;
-    
+
     @Mock
     private NacosAuthManager authManager;
-    
+
     private UserController userController;
-    
+
     private NacosUser user;
-    
+
     @Before
     public void setUp() throws Exception {
         userController = new UserController();
@@ -66,7 +78,7 @@ public class UserControllerTest {
         injectObject("authConfigs", authConfigs);
         injectObject("authManager", authManager);
     }
-    
+
     @Test
     public void testLoginWithAuthedUser() throws AccessException {
         when(authManager.login(request)).thenReturn(user);
@@ -79,7 +91,7 @@ public class UserControllerTest {
         assertTrue(actualString.contains("\"tokenTtl\":18000"));
         assertTrue(actualString.contains("\"globalAdmin\":true"));
     }
-    
+
     private void injectObject(String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
         Field field = UserController.class.getDeclaredField(fieldName);
         field.setAccessible(true);

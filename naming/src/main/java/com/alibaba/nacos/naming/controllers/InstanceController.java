@@ -129,9 +129,19 @@ public class InstanceController {
                 .optional(request, CommonParams.NAMESPACE_ID, Constants.DEFAULT_NAMESPACE_ID);
         final String serviceName = WebUtils.required(request, CommonParams.SERVICE_NAME);
         NamingUtils.checkServiceNameFormat(serviceName);
-
+        // 解析请求参数，并校验参数是否合法（IP，权重分配），若存在元数据则需解析JSON数据内容
         final Instance instance = parseInstance(request);
-
+        /* 注册一个服务实例【 **若服务集群不存在，则静默创建集群**】
+           1. 创建服务（若服务不存在），模型: service（服务） --> cluster（集群） --> instance（实例）【
+                1. new Service();
+                    --- 创建一个 ClientBeatCheckTask Runnable 的运行任务实例
+                    --- 存储 Service 至 Map(namespace, Map(group::serviceName, Service))
+                2. 服务初始化d
+                    --- 创建实例的状态检查延迟线程【start ClientBeatCheckTask 】启动线程之后，每隔 5 秒检查一次实例状态，超时时间15秒
+                3.
+              】
+           2.
+        */
         serviceManager.registerInstance(namespaceId, serviceName, instance);
         return "ok";
     }
